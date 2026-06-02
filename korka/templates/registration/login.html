@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-wrapper">
+
+    <div class="auth-card">
+        <h2>Вход в аккаунт</h2>
+        <p class="auth-subtitle">Введите логин и пароль</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Логин</label>
+                {{ form.username }}
+            </div>
+
+            <div class="form-group">
+                <label>Пароль</label>
+                {{ form.password }}
+            </div>
+            
+
+            <button class="auth-btn" type="submit">
+                Войти
+            </button>
+        </form>
+
+        {% if form.errors %}
+        <div class="auth-errors">
+            Неверный логин или пароль
+        </div>
+        {% endif %}
+
+        <p class="auth-switch">
+            Нет аккаунта?
+            <a href="/accounts/register/">Регистрация</a>
+        </p>
+
+    </div>
+
+</div>
+{% endblock %}

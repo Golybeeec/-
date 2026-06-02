@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Корочки.есть</title>
+    <link rel="stylesheet" href="{% static 'css/red1.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <div class="logo-title-container">
+            <a href="/" class="logo-link">
+                <img src="/static/images/log2.png" alt="Логотип Корочки.есть" class="logo">
+                
+            </a>
+        </div>
+
+        {% if user.is_authenticated %}
+        <nav class="nav-container">
+            <a href="/">Главная</a>
+            <a href="/korka/applications/">Мои заявки</a>
+            <a href="/korka/applications/create/">Создать заявку</a>
+
+            {% if user.is_staff %}
+                <a href="/admin/">Панель администратора</a>
+            {% endif %}
+
+            <form action="/accounts/logout/" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Выйти</button>
+            </form>
+        </nav>
+        {% endif %}
+    </div>
+</header>
+
+<hr>
+
+{% comment %} <div class="container"> {% endcomment %}
+    {% block content %}{% endblock %}
+{% comment %} </div> {% endcomment %}
+
+</body>
+</html>

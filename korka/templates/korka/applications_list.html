@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="applications-wrapper">
+    <div class="applications-card">
+        <h2>Мои заявки</h2>
+
+        {% if applications %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Курс</th>
+                        <th>Дата начала</th>
+                        <th>Способ оплаты</th>
+                        <th>Статус</th>
+                        <th>Отзыв</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for app in applications %}
+                    <tr class="status-{{ app.status }}">
+                        <td>{{ app.get_course_name_display }}</td>
+                        <td>{{ app.start_date }}</td>
+                        <td>{{ app.get_payment_method_display }}</td>
+                        <td>{{ app.get_status_display }}</td>
+                        <td>
+                        {% if app.feedback %}
+                            <span class="feedback-text">{{ app.feedback }}</span>
+                        {% else %}
+                            {% if app.status == 'done' %}
+                                <form method="post" class="feedback-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="app_id" value="{{ app.id }}">
+                                    <input type="text" name="feedback" placeholder="Оставьте отзыв" required>
+                                    <button type="submit">Отправить</button>
+                                </form>
+                            {% else %}
+                                <input type="text" placeholder="Можно оставить отзыв после завершения" disabled>
+                                <button type="submit" disabled>Отправить</button>
+                            {% endif %}
+                        {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="no-applications">Заявок пока нет.</p>
+        {% endif %}
+
+        <div class="create-link">
+            <a class="linka" href="/korka/applications/create/">Создать новую заявку</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

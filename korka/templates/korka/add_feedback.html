@@ -1,0 +1,7 @@
+<h2>Оставить отзыв для курса: {{ application.get_course_name_display }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+</form>

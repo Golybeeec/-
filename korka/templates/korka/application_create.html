@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="applications-wrapper">
+    <div class="applications-card">
+        <h2>Создание заявки</h2>
+        <p class="auth-subtitle">Заполните форму, чтобы подать заявку на курс</p>
+
+        <form method="post" class="applications-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_course_name">Наименование курса:</label>
+                {{ form.course_name }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_start_date">Желаемая дата начала:</label>
+                {{ form.start_date }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_payment_method">Способ оплаты:</label>
+                {{ form.payment_method }}
+            </div>
+
+            <button type="submit" class="auth-btn">Отправить заявку</button>
+        </form>
+
+        <div class="form-footer">
+            <a class="back-link" href="{% url 'applications_list' %}">
+                Назад к заявкам
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

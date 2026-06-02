@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="home-wrapper">
+    <div class="home-header">
+        <h1>Добро пожаловать на портал «Корочки.есть»</h1>
+        <p class="home-subtitle">
+            Современная информационная система для записи на онлайн-курсы дополнительного профессионального образования.
+        </p>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="text-content">
+            <h2>Что вы можете делать:</h2>
+            <ul class="intro-list">
+                <li>Подать заявку на обучение по интересующему курсу</li>
+                <li>Следить за статусом своей заявки</li>
+                <li>Оставлять отзывы о пройденных курсах и образовательных услугах</li>
+            </ul>
+        </div>
+
+        <div class="slider-container">
+            <div class="slider">
+                <div class="slides">
+                    <img src="{% static 'images/img1.jpg' %}" alt="Курс 1">
+                    <img src="{% static 'images/img2.jpg' %}" alt="Курс 2">
+                    <img src="{% static 'images/img3.jpg' %}" alt="Курс 3">
+                    <img src="{% static 'images/img4.jpg' %}" alt="Курс 4">
+                </div>
+                <button class="prev">&#10094;</button>
+                <button class="next">&#10095;</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentIndex = 0;
+const slides = document.querySelector('.slides');
+const totalSlides = slides.children.length;
+
+function showSlide(index) {
+    if(index >= totalSlides) currentIndex = 0;
+    else if(index < 0) currentIndex = totalSlides - 1;
+    else currentIndex = index;
+    slides.style.transform = `translateX(-${currentIndex * 100}%)`;
+}
+
+let slideInterval = setInterval(() => {
+    showSlide(currentIndex + 1);
+}, 3500);
+
+document.querySelector('.prev').addEventListener('click', () => { showSlide(currentIndex - 1); resetInterval(); });
+document.querySelector('.next').addEventListener('click', () => { showSlide(currentIndex + 1); resetInterval(); });
+
+function resetInterval() {
+    clearInterval(slideInterval);
+    slideInterval = setInterval(() => { showSlide(currentIndex + 1); }, 3500);
+}
+</script>
+{% endblock %}
