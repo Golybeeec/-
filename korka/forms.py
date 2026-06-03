@@ -14,12 +14,11 @@ class LoginForm(forms.Form):
     username = forms.CharField(label='Логин')
     password = forms.CharField(label='Пароль', widget=forms.PasswordInput)
 
-
 class RegistrationForm(forms.ModelForm):
     username = forms.CharField(label='Логин')
-    full_name = forms.CharField(label='ФИО', max_length=150)
-    phone = forms.CharField(label='Телефон', max_length=16)
-    email = forms.EmailField(label='Email')
+    full_name = forms.CharField(label='ФИО', max_length=150, required=False)
+    phone = forms.CharField(label='Телефон', max_length=16, required=False)
+    email = forms.EmailField(label='Email', required=False)
     password = forms.CharField(label='Пароль', widget=forms.PasswordInput)
 
     class Meta:
@@ -34,18 +33,6 @@ class RegistrationForm(forms.ModelForm):
             raise ValidationError('Пользователь с таким логином уже существует')
         return username
 
-    def clean_full_name(self):
-        full_name = self.cleaned_data['full_name']
-        if not re.match(r'^[А-Яа-яЁё\s]+$', full_name):
-            raise ValidationError('ФИО должно содержать только кириллицу и пробелы')
-        return full_name
-
-    def clean_phone(self):
-        phone = self.cleaned_data['phone']
-        if not re.match(r'^8\(\d{3}\)\d{3}-\d{2}-\d{2}$', phone):
-            raise ValidationError('Телефон должен быть в формате 8(XXX)XXX-XX-XX')
-        return phone
-
     def clean_password(self):
         password = self.cleaned_data['password']
         if len(password) < 8:
@@ -59,7 +46,6 @@ class RegistrationForm(forms.ModelForm):
             user.save()
         return user
 
-
 class ApplicationForm(forms.ModelForm):
     start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     course_name = forms.ChoiceField(choices=COURSE_CHOICES)
@@ -67,7 +53,6 @@ class ApplicationForm(forms.ModelForm):
     class Meta:
         model = Application
         fields = ['course_name', 'start_date', 'payment_method']
-
 
 class FeedbackForm(forms.ModelForm):
     class Meta:
