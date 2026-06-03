@@ -1,0 +1,1374 @@
+settings
+import os
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'personal'
+LOGOUT_REDIRECT_URL = 'index'
+urls
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('tours.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+tours/about
+{% extends 'tours/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>О компании</h1>
+    </div>
+</section>
+
+<section class="about-content">
+    <div class="container">
+        <div class="about-info">
+            <h2>SummerTravel - ваш гид в мир путешествий</h2>
+            <p>Бренд SummerTravel представлен на рынке с 2000 года. Оператор занимает лидирующие позиции в туристической отрасли. Туроператор предлагает лучшие курорты и отели в 40 странах мира, среди которых страны всех континентов и регионов: Европа, Азия, Африка, Америка и даже Антарктида.</p>
+            <p>Мы занимаемся развитием экстремального, спортивного и других видов туризма. Идет постоянная работа по открытию новых направлений.</p>
+            
+            <div class="mission">
+                <h3>Наша миссия</h3>
+                <p>Миссия SummerTravel заключается в доверительных отношениях с клиентом, уважительном отношении к клиенту и окружающей среде туристических регионов. Конечная цель деятельности компании - сделать качественный отдых доступным для всех категорий населения страны.</p>
+            </div>
+            
+            <div class="booking-terms">
+                <h3>Условия бронирования</h3>
+                <ul>
+                    <li>Предоплата 30% при бронировании тура</li>
+                    <li>Полная оплата за 14 дней до вылета</li>
+                    <li>Бесплатная отмена за 30 дней до тура</li>
+                    <li>Рассрочка на 6 месяцев</li>
+                    <li>Страховка включена в стоимость</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+tours/base
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SummerTravel - {% block title %}Туристическое агентство{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'tours/css/style.css' %}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="{% url 'index' %}">SummerTravel</a>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{% url 'index' %}">Главная</a></li>
+                        <li><a href="{% url 'about' %}">О компании</a></li>
+                        <li><a href="{% url 'contacts' %}">Контакты</a></li>
+                        {% if user.is_authenticated %}
+                            <li><a href="{% url 'personal' %}">Личный кабинет</a></li>
+                            <li><a href="{% url 'logout' %}">Выйти ({{ user.username }})</a></li>
+                        {% else %}
+                            <li><a href="{% url 'login' %}">Вход</a></li>
+                            <li><a href="{% url 'register' %}">Регистрация</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h4>SummerTravel</h4>
+                    <p>Туристическое агентство с 2000 года</p>
+                </div>
+                <div class="footer-contacts">
+                    <h4>Контакты</h4>
+                    <p>Телефон: +7-900-800-90-70</p>
+                    <p>Email: info@summertravel.ru</p>
+                    <p>Адрес: Московское ш., 108</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>SummerTravel. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
+book_tour
+{% extends 'tours/base.html' %}
+
+{% block content %}
+<section class="booking-section">
+    <div class="container">
+        <div class="booking-form">
+            <h2>Бронирование тура</h2>
+            <div class="tour-summary">
+                <h3>{{ tour.country }}, {{ tour.city }}</h3>
+                <p>Дата: {{ tour.start_date|date:"d.m.Y" }} - {{ tour.end_date|date:"d.m.Y" }}</p>
+                <p>Цена: {{ tour.price }} руб.</p>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn-primary">Подтвердить бронирование</button>
+                <a href="{% url 'index' %}" class="btn-secondary">Отмена</a>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+contacts
+{% extends 'tours/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Контакты</h1>
+    </div>
+</section>
+
+<section class="contacts-content">
+    <div class="container">
+        <div class="contacts-grid">
+            <div class="contacts-info">
+                <div class="contact-item">
+                    <h3>Адрес</h3>
+                    <p>Московское ш., 108</p>
+                </div>
+                <div class="contact-item">
+                    <h3>Телефон</h3>
+                    <p>+7-900-800-90-70</p>
+                </div>
+                <div class="contact-item">
+                    <h3>Email</h3>
+                    <p>info@summertravel.ru</p>
+                </div>
+                <div class="contact-item">
+                    <h3>График работы</h3>
+                    <ul class="schedule">
+                        <li>Понедельник: 9:00 - 20:00</li>
+                        <li>Вторник: 9:00 - 20:00</li>
+                        <li>Среда: 9:00 - 20:00</li>
+                        <li>Четверг: 9:00 - 20:00</li>
+                        <li>Пятница: 9:00 - 20:00</li>
+                        <li>Суббота: 9:00 - 18:00</li>
+                        <li>Воскресенье: 9:00 - 18:00</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="contacts-map">
+                <h3>Схема проезда</h3>
+                <div class="map-placeholder">
+                    <p>Карта: Московское шоссе, 108</p>
+                    <p>Офис находится на 1 этаже БЦ "Лето"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+index
+{% extends 'tours/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="slider-section">
+    <div class="slider-container">
+        <div class="slide active">
+            <div class="slide-content">
+                <h1>Путешествуйте с SummerTravel</h1>
+                <p>Лучшие туры в 40 странах мира</p>
+                <a href="#tours" class="btn-primary">Выбрать тур</a>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <h1>Отдых на любой вкус</h1>
+                <p>Экскурсионные, пляжные и экстремальные туры</p>
+                <a href="#tours" class="btn-primary">Подобрать тур</a>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <h1>Лучшие цены</h1>
+                <p>Горящие туры со скидкой до 50%</p>
+                <a href="#tours" class="btn-primary">Узнать больше</a>
+            </div>
+        </div>
+        
+        <button class="slider-btn prev" onclick="changeSlide(-1)">&#10094;</button>
+        <button class="slider-btn next" onclick="changeSlide(1)">&#10095;</button>
+        
+        <div class="slider-dots">
+            <span class="dot active" onclick="currentSlide(0)"></span>
+            <span class="dot" onclick="currentSlide(1)"></span>
+            <span class="dot" onclick="currentSlide(2)"></span>
+        </div>
+    </div>
+</section>
+
+<section id="tours" class="tours">
+    <div class="container">
+        <h2>Популярные туры</h2>
+        <div class="cards-grid">
+            {% for tour in tours %}
+            <div class="card">
+                <div class="card-content">
+                    <h3>{{ tour.country }}, {{ tour.city }}</h3>
+                    <p>Дата: {{ tour.start_date|date:"d.m.Y" }} - {{ tour.end_date|date:"d.m.Y" }}</p>
+                    <p class="price">Цена: {{ tour.price }} руб.</p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'book_tour' tour.id %}" class="btn-book">Забронировать</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn-book">Войдите чтобы бронировать</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="agents">
+    <div class="container">
+        <h2>Наши турагенты</h2>
+        <div class="cards-grid">
+            {% for agent in agents %}
+            <div class="card">
+                <div class="card-content">
+                    <h3>{{ agent.full_name }}</h3>
+                    <p class="spec">Специализация: {{ agent.specialization }}</p>
+                    <p>{{ agent.bio|truncatewords:15 }}</p>
+                    <small>Опыт: {{ agent.experience }} лет</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="reviews">
+    <div class="container">
+        <h2>Отзывы клиентов</h2>
+        <div class="cards-grid">
+            {% for review in reviews %}
+            <div class="card review-card">
+                <div class="review-header">
+                    <div>
+                        <h3>{{ review.user.username }}</h3>
+                        <div class="rating">Рейтинг: {{ review.rating }}/5</div>
+                    </div>
+                </div>
+                <p>"{{ review.text|truncatewords:20 }}"</p>
+                <small>{{ review.created_at|date:"d.m.Y" }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<script>
+    let slideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    
+    function showSlide(index) {
+        if (index >= slides.length) slideIndex = 0;
+        if (index < 0) slideIndex = slides.length - 1;
+        
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        slides[slideIndex].classList.add('active');
+        dots[slideIndex].classList.add('active');
+    }
+    
+    function changeSlide(direction) {
+        slideIndex += direction;
+        showSlide(slideIndex);
+    }
+    
+    function currentSlide(index) {
+        slideIndex = index;
+        showSlide(slideIndex);
+    }
+    
+    setInterval(() => {
+        slideIndex++;
+        showSlide(slideIndex);
+    }, 5000);
+</script>
+{% endblock %}
+login
+{% extends 'tours/base.html' %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-form">
+            <h2>Вход в аккаунт</h2>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn-primary">Войти</button>
+            </form>
+            <p class="auth-link">Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+personal
+{% extends 'tours/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="personal-section">
+    <div class="container">
+        <h2>Личный кабинет</h2>
+        
+        <div class="personal-grid">
+            <div class="user-info">
+                <h3>Мои данные</h3>
+                <div class="info-card">
+                    <p><strong>ФИО:</strong> {{ user.username }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
+                    <p><strong>Геолокация:</strong> Москва, Россия</p>
+                </div>
+            </div>
+            
+            <div class="bookings-info">
+                <h3>Мои бронирования</h3>
+                {% if first_booking %}
+                <div class="booking-card">
+                    <h4>Активный тур</h4>
+                    <p><strong>{{ first_booking.tour.country }}, {{ first_booking.tour.city }}</strong></p>
+                    <p>Дата: {{ first_booking.tour.start_date|date:"d.m.Y" }} - {{ first_booking.tour.end_date|date:"d.m.Y" }}</p>
+                    <p>Количество гостей: {{ first_booking.guests_count }}</p>
+                    <p class="status confirmed">Статус: Подтвержден</p>
+                </div>
+                {% else %}
+                    <p>У вас пока нет бронирований</p>
+                    <a href="{% url 'index' %}" class="btn-primary">Выбрать тур</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+register
+{% extends 'tours/base.html' %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-form">
+            <h2>Регистрация</h2>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="error">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <div class="form-group checkbox">
+                    <input type="checkbox" required>
+                    <label>Я согласен с правилами пользователя</label>
+                </div>
+                <button type="submit" class="btn-primary">Зарегистрироваться</button>
+            </form>
+            <p class="auth-link">Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+admin
+from django.contrib import admin
+from .models import Tour, Agent, Review, Booking
+
+@admin.register(Tour)
+class TourAdmin(admin.ModelAdmin):
+    list_display = ['title', 'country', 'city', 'start_date', 'price', 'is_popular']
+    list_filter = ['is_popular', 'country']
+    search_fields = ['title', 'country', 'city']
+
+@admin.register(Agent)
+class AgentAdmin(admin.ModelAdmin):
+    list_display = ['full_name', 'specialization', 'experience']
+    search_fields = ['full_name']
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ['user', 'tour', 'rating', 'created_at']
+    list_filter = ['rating', 'created_at']
+
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    list_display = ['user', 'tour', 'status', 'booking_date']
+    list_filter = ['status', 'booking_date']
+forms
+from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+from .models import Booking, Review
+
+class RegisterForm(UserCreationForm):
+    """Форма регистрации"""
+    email = forms.EmailField(required=True, label='Email')
+    email2 = forms.EmailField(required=True, label='Повторите Email')
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'email2', 'password1', 'password2']
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        email2 = cleaned_data.get('email2')
+        
+        if email and email2 and email != email2:
+            raise forms.ValidationError('Email не совпадают')
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+        return user
+
+class LoginForm(forms.Form):
+    """Форма входа"""
+    username = forms.CharField(max_length=150, label='Логин')
+    password = forms.CharField(widget=forms.PasswordInput, label='Пароль')
+
+class BookingForm(forms.ModelForm):
+    """Форма бронирования"""
+    class Meta:
+        model = Booking
+        fields = ['guests_count']
+        labels = {
+            'guests_count': 'Количество гостей'
+        }
+models
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+class Tour(models.Model):
+    """Модель тура"""
+    title = models.CharField('Название', max_length=200)
+    country = models.CharField('Страна', max_length=100)
+    city = models.CharField('Город', max_length=100)
+    start_date = models.DateField('Дата начала')
+    end_date = models.DateField('Дата окончания')
+    price = models.DecimalField('Цена', max_digits=10, decimal_places=2)
+    image = models.ImageField('Изображение', upload_to='tours/', blank=True, null=True)
+    description = models.TextField('Описание', blank=True)
+    is_popular = models.BooleanField('Популярный', default=True)
+    
+    def __str__(self):
+        return f"{self.country} - {self.city} ({self.start_date})"
+    
+    class Meta:
+        verbose_name = 'Тур'
+        verbose_name_plural = 'Туры'
+
+class Agent(models.Model):
+    """Модель турагента"""
+    full_name = models.CharField('ФИО', max_length=200)
+    specialization = models.CharField('Специализация', max_length=200)
+    bio = models.TextField('Краткая информация')
+    photo = models.ImageField('Фото', upload_to='agents/', blank=True, null=True)
+    experience = models.IntegerField('Опыт работы (лет)', default=0)
+    
+    def __str__(self):
+        return self.full_name
+    
+    class Meta:
+        verbose_name = 'Агент'
+        verbose_name_plural = 'Агенты'
+
+class Review(models.Model):
+    """Модель отзыва"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, verbose_name='Тур', null=True, blank=True)
+    rating = models.IntegerField('Рейтинг', choices=[(i, i) for i in range(1, 6)])
+    text = models.TextField('Отзыв')
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.rating} звезд"
+    
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+
+class Booking(models.Model):
+    """Модель бронирования"""
+    STATUS_CHOICES = [
+        ('pending', 'Ожидает подтверждения'),
+        ('confirmed', 'Подтвержден'),
+        ('cancelled', 'Отменен'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, verbose_name='Тур')
+    booking_date = models.DateTimeField('Дата бронирования', auto_now_add=True)
+    status = models.CharField('Статус', max_length=20, choices=STATUS_CHOICES, default='pending')
+    guests_count = models.IntegerField('Количество гостей', default=1)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.tour.title}"
+    
+    class Meta:
+        verbose_name = 'Бронь'
+        verbose_name_plural = 'Брони'
+urls
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('about/', views.about, name='about'),
+    path('contacts/', views.contacts, name='contacts'),
+    path('register/', views.register_view, name='register'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('personal/', views.personal, name='personal'),
+    path('book/<int:tour_id>/', views.book_tour, name='book_tour'),
+]
+views
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Tour, Agent, Review, Booking
+from .forms import RegisterForm, LoginForm, BookingForm
+
+def index(request):
+    """Главная страница"""
+    tours = Tour.objects.filter(is_popular=True)[:4]
+    agents = Agent.objects.all()[:4]
+    reviews = Review.objects.all().order_by('-created_at')[:4]
+    
+    context = {
+        'tours': tours,
+        'agents': agents,
+        'reviews': reviews,
+    }
+    return render(request, 'tours/index.html', context)
+
+def about(request):
+    """О компании"""
+    return render(request, 'tours/about.html')
+
+def contacts(request):
+    """Контакты"""
+    return render(request, 'tours/contacts.html')
+
+def register_view(request):
+    """Регистрация"""
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Регистрация прошла успешно!')
+            return redirect('personal')
+    else:
+        form = RegisterForm()
+    
+    return render(request, 'tours/register.html', {'form': form})
+
+def login_view(request):
+    """Вход"""
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            
+            if user:
+                login(request, user)
+                messages.success(request, f'Добро пожаловать, {username}!')
+                return redirect('personal')
+            else:
+                messages.error(request, 'Неверный логин или пароль')
+    else:
+        form = LoginForm()
+    
+    return render(request, 'tours/login.html', {'form': form})
+
+def logout_view(request):
+    """Выход"""
+    logout(request)
+    messages.info(request, 'Вы вышли из системы')
+    return redirect('index')
+
+@login_required
+def personal(request):
+    """Личный кабинет"""
+    bookings = Booking.objects.filter(user=request.user, status='confirmed')
+    first_booking = bookings.first()
+    
+    context = {
+        'bookings': bookings,
+        'first_booking': first_booking,
+    }
+    return render(request, 'tours/personal.html', context)
+
+@login_required
+def book_tour(request, tour_id):
+    """Бронирование тура"""
+    tour = get_object_or_404(Tour, id=tour_id)
+    
+    if request.method == 'POST':
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            booking = form.save(commit=False)
+            booking.user = request.user
+            booking.tour = tour
+            booking.save()
+            messages.success(request, f'Тур "{tour.title}" успешно забронирован!')
+            return redirect('personal')
+    else:
+        form = BookingForm()
+    
+    return render(request, 'tours/book_tour.html', {'tour': tour, 'form': form})
+tours/static
+css
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #f9f9f9;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+header {
+    background: #1a5f7a;
+    color: white;
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.logo a {
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.logo a span {
+    background: #ff6b35;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 25px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.3s;
+}
+
+nav a:hover {
+    opacity: 0.8;
+}
+
+.contacts-header {
+    font-size: 14px;
+    text-align: right;
+}
+
+.hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    padding: 100px 0;
+}
+
+.hero h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 20px;
+}
+
+section {
+    padding: 60px 0;
+}
+
+h2 {
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 40px;
+    color: #1a5f7a;
+}
+
+h3 {
+    color: #1a5f7a;
+    margin-bottom: 10px;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-image {
+    height: 200px;
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #666;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 20px;
+}
+
+.price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff6b35;
+    margin: 10px 0;
+}
+
+.spec {
+    color: #ff6b35;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.btn-book, .btn-primary {
+    display: inline-block;
+    background: #ff6b35;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.btn-book:hover, .btn-primary:hover {
+    background: #e55a2b;
+}
+
+.btn-secondary {
+    display: inline-block;
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-left: 10px;
+    transition: background 0.3s;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.rating {
+    color: #ffc107;
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+.auth-section {
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    padding: 60px 0;
+}
+
+.auth-form {
+    max-width: 500px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.auth-form h2 {
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ff6b35;
+}
+
+.error {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox input {
+    width: auto;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.auth-link a {
+    color: #ff6b35;
+    text-decoration: none;
+}
+
+.personal-section {
+    padding: 60px 0;
+}
+
+.personal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.info-card, .booking-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.info-card p {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-card p:last-child {
+    border-bottom: none;
+}
+
+.status.confirmed {
+    color: #28a745;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.booking-card h4 {
+    color: #ff6b35;
+    margin-bottom: 15px;
+}
+
+.messages {
+    margin-top: 20px;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #6a708b 0%, #32436e 100%);
+    color: white;
+    padding: 60px 0;
+    text-align: center;
+}
+
+.page-header h1 {
+    font-size: 48px;
+}
+
+.about-content {
+    padding: 60px 0;
+}
+
+.about-info {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.about-info h2 {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.about-info p {
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+
+.mission, .booking-terms {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f0f8ff;
+    border-radius: 10px;
+}
+
+.booking-terms ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.booking-terms li {
+    padding: 8px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.slider-section {
+    padding: 0;
+    position: relative;
+}
+
+.slider-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    background-size: cover;
+    background-position: center;
+}
+
+.slide.active {
+    opacity: 1;
+}
+
+.slide:nth-child(1) {
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/static/tours/img/i1.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.slide:nth-child(2) {
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/static/tours/img/i2.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.slide:nth-child(3) {
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/static/tours/img/i3.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.slide-content {
+    max-width: 800px;
+    padding: 20px;
+}
+
+.slide-content h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.8s ease;
+}
+
+.slide-content p {
+    font-size: 20px;
+    margin-bottom: 30px;
+    animation: fadeInUp 0.8s ease 0.2s both;
+}
+
+.slide-content .btn-primary {
+    animation: fadeInUp 0.8s ease 0.4s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.3);
+    color: white;
+    border: none;
+    padding: 15px 20px;
+    cursor: pointer;
+    font-size: 24px;
+    border-radius: 5px;
+    transition: background 0.3s;
+    z-index: 10;
+}
+
+.slider-btn:hover {
+    background: rgba(255,255,255,0.6);
+}
+
+.prev {
+    left: 20px;
+}
+
+.next {
+    right: 20px;
+}
+
+.slider-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.dot.active {
+    background: white;
+}
+
+.dot:hover {
+    background: rgba(255,255,255,0.8);
+}
+
+.contacts-content {
+    padding: 60px 0;
+}
+
+.contacts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.contact-item {
+    margin-bottom: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.contact-item h3 {
+    color: #ff6b35;
+    margin-bottom: 15px;
+}
+
+.schedule {
+    list-style: none;
+    padding-left: 0;
+}
+
+.schedule li {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.contacts-map {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.map-placeholder {
+    background: #e0e0e0;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    margin-top: 15px;
+    color: #666;
+}
+
+.booking-section {
+    padding: 60px 0;
+}
+
+.booking-form {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.tour-summary {
+    background: #f0f8ff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.tour-summary h3 {
+    margin-bottom: 10px;
+}
+
+footer {
+    background: #0d3b4f;
+    color: white;
+    padding: 40px 0 20px;
+    margin-top: 60px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+.footer-content h4 {
+    margin-bottom: 15px;
+    color: #ff6b35;
+}
+
+.footer-content p {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .contacts-header {
+        text-align: center;
+    }
+    
+    .hero h1 {
+        font-size: 32px;
+    }
+    
+    .personal-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .contacts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    h2 {
+        font-size: 28px;
+    }
+    
+    .auth-form {
+        padding: 20px;
+    }
+}
+@media (max-width: 768px) {
+    .slider-container {
+        height: 400px;
+    }
+    
+    .slide-content h1 {
+        font-size: 32px;
+    }
+    
+    .slide-content p {
+        font-size: 16px;
+    }
+    
+    .slider-btn {
+        padding: 10px 15px;
+        font-size: 18px;
+    }
+}
