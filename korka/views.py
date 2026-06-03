@@ -13,27 +13,20 @@ def register(request):
             user = form.save()
             full_name = form.cleaned_data.get('full_name', '')
             phone = form.cleaned_data.get('phone', '')
-            
-            if full_name:  # Проверка на пустое значение
+            if full_name:  
                 names = full_name.split(' ', 2)
                 user.first_name = names[0] if len(names) > 0 else ''
                 user.last_name = names[1] if len(names) > 1 else ''
             
             user.email = form.cleaned_data.get('email', '')
             user.save()
-            
-            # Убираем автоматический вход
-            # login(request, user) - ЭТО УДАЛЯЕМ
-            
             messages.success(request, "Регистрация успешна! Теперь вы можете войти в систему.")
-            # Перенаправляем на страницу входа
             return redirect('login')
     else:
         form = RegistrationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
 def login_view(request):
-    # Если пользователь уже авторизован, перенаправляем на список заявок
     if request.user.is_authenticated:
         return redirect('applications_list')
     
